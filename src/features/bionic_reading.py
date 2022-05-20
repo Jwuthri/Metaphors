@@ -122,7 +122,7 @@ class BionicReading:
 
         return output
 
-    def read_faster(self, text: str, output_format: str = "html"):
+    def read_faster(self, text: str, output_format: str = "html") -> str:
         """
         The function takes a string of text, splits it into a list of words, highlights the words, and then returns the
         highlighted text
