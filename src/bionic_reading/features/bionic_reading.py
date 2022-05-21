@@ -23,7 +23,6 @@ class BionicReading:
         self.non_tokens = string.punctuation + " \n\t"
         self.bold = '\033[1m'
         self.end = '\033[0m'
-        self.bold_weight = self.opacity * 1000
 
     @staticmethod
     def split_text_to_words(text: str) -> List[str]:
@@ -50,7 +49,6 @@ class BionicReading:
         :return: The token is being returned with the bold formatting.
         """
         if output_format == "html":
-            self.bold_weight = self.opacity * 1000
             return f"<b>{token}</b>"
         else:
             return f"{self.bold}{token}{self.end}"
@@ -124,7 +122,7 @@ class BionicReading:
         """
         output = text
         if output_format == "html":
-            style = "b {font-weight: %d}" % self.bold_weight
+            style = "b {font-weight: %d}" % self.opacity * 1000
             output = f"<!DOCTYPE html><html><head><style>{style}</style></head><body><p>{text}</p></body></html>"
 
         return output
