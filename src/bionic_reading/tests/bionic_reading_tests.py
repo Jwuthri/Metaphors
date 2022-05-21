@@ -1,4 +1,4 @@
-from src.features.bionic_reading import BionicReading
+from src.bionic_reading.features.bionic_reading import BionicReading
 
 output = BionicReading().read_faster("We are happy if as many people as possible can use the advantage of Bionic Reading. For this reason, Bionic Reading should be able to be integrated into existing apps and services. The benefit for the reader should be the main focus.", output_format="html")
 expected_output = """<!DOCTYPE html><html><head><style>b {font-weight: 750}</style></head><body><p><b>W</b>e <b>ar</b>e <b>hap</b>py <b>i</b>f <b>a</b>s <b>ma</b>ny <b>peop</b>le <b>a</b>s <b>possi</b>ble <b>ca</b>n <b>us</b>e <b>th</b>e <b>advan</b>tage <b>o</b>f <b>Bion</b>ic <b>Readi</b>ng. <b>Fo</b>r <b>th</b>is <b>reas</b>on, <b>Bion</b>ic <b>Read</b>ing <b>shou</b>ld <b>b</b>e <b>ab</b>le <b>t</b>o <b>b</b>e <b>integr</b>ated <b>in</b>to <b>exist</b>ing <b>ap</b>ps <b>an</b>d <b>servi</b>ces. <b>Th</b>e <b>bene</b>fit <b>fo</b>r <b>th</b>e <b>read</b>er <b>shou</b>ld <b>b</b>e <b>th</b>e <b>ma</b>in <b>focu</b>s.</p></body></html>"""
