@@ -24,6 +24,48 @@ class BionicReading:
         self.bold = '\033[1m'
         self.end = '\033[0m'
 
+    @property
+    def fixation(self):
+        return self._fixation
+
+    @fixation.setter
+    def fixation(self, value: float):
+        assert isinstance(value, float), "please use a fixation float type"
+        assert 0 <= value <= 1, "please enter a fixation value between 0 and 1"
+        self._fixation = value
+
+    @fixation.deleter
+    def fixation(self):
+        del self._fixation
+
+    @property
+    def saccades(self):
+        return self._saccades
+
+    @saccades.setter
+    def saccades(self, value: float):
+        assert isinstance(value, float), "please use a saccades float type"
+        assert 0 <= value <= 1, "please enter a saccades value between 0 and 1"
+        self._saccades = value
+
+    @saccades.deleter
+    def saccades(self):
+        del self._saccades
+
+    @property
+    def opacity(self):
+        return self._opacity
+
+    @opacity.setter
+    def opacity(self, value: float):
+        assert isinstance(value, float), "please use a opacity float type"
+        assert 0 <= value <= 1, "please enter an opacity value between 0 and 1"
+        self._opacity = value
+
+    @opacity.deleter
+    def opacity(self):
+        del self._opacity
+
     @staticmethod
     def split_text_to_words(text: str) -> List[str]:
         """
@@ -122,7 +164,7 @@ class BionicReading:
         """
         output = text
         if output_format == "html":
-            style = "b {font-weight: %d}" % self.opacity * 1000
+            style = "b {font-weight: %d}" % (self.opacity * 1000)
             output = f"<!DOCTYPE html><html><head><style>{style}</style></head><body><p>{text}</p></body></html>"
 
         return output
@@ -143,3 +185,10 @@ class BionicReading:
         highlighted_text = self.tokens_to_text(highlighted_tokens)
 
         return self.to_output_format(highlighted_text, output_format)
+
+
+if __name__ == '__main__':
+    _ = BionicReading().read_faster(
+        "We are happy if as many people as possible can use the advantage of Bionic Reading.", output_format="html"
+    )
+    print(_)
