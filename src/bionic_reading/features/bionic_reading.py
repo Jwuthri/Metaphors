@@ -23,7 +23,7 @@ class BionicReading:
         self.non_tokens = string.punctuation + " \n\t"
         self.bold = '\033[1m'
         self.end = '\033[0m'
-        self.bold_weight = opacity * 1000
+        self.bold_weight = self.opacity * 1000
 
     @staticmethod
     def split_text_to_words(text: str) -> List[str]:
@@ -50,6 +50,7 @@ class BionicReading:
         :return: The token is being returned with the bold formatting.
         """
         if output_format == "html":
+            self.bold_weight = self.opacity * 1000
             return f"<b>{token}</b>"
         else:
             return f"{self.bold}{token}{self.end}"
@@ -70,24 +71,30 @@ class BionicReading:
 
         return token[:last_char_index], token[last_char_index:]
 
-    def saccades_highlight(self, tokens: List[str], output_format: str) -> List[str]:
+    def saccades_highlight(self) -> int:
         """
-        If the saccades value is less than 1/3, then every third token is highlighted. If the saccades value is less
-        than 2/3, then every second token is highlighted. Otherwise, every token is highlighted
+        If the saccades are less than 1/3, return 3, else if the saccades are less than 2/3, return 2, else return 1
+        :return: an integer value.
+        """
+        return 3 if self.saccades < 1 / 3 else 2 if self.saccades < 2 / 3 else 1
+
+    def highlight_tokens(self, tokens: List[str], output_format: str) -> List[str]:
+        """
+        The function takes a list of tokens and an output format, and returns a list of tokens with the tokens that are
+        highlighted
 
         :param tokens: a list of tokens to highlight
         :type tokens: List[str]
-        :param output_format: The format of the output. This is used to determine the color of the highlighted text
+        :param output_format: The format of the output file
         :type output_format: str
-        :return: A list of tokens with the saccades highlighted.
+        :return: A list of tokens with the tokens that are highlighted.
         """
-        token_to_skip = 3 if self.saccades < 1/3 else 2 if self.saccades < 2/3 else 1
         index = 0
         highlighted_tokens = []
         for token in tokens:
             if token not in self.non_tokens:
                 index += 1
-                if index % token_to_skip == 0 or index == 1:
+                if index % self.saccades_highlight() == 0 or index == 1:
                     token_to_highlight, token_not_to_highlight = self.fixation_highlight(token)
                     token = self.opacity_highlight(token_to_highlight, output_format) + token_not_to_highlight
             highlighted_tokens.append(token)
@@ -134,7 +141,7 @@ class BionicReading:
         :return: The highlighted text
         """
         tokens = self.split_text_to_words(text)
-        highlighted_tokens = self.saccades_highlight(tokens, output_format)
+        highlighted_tokens = self.highlight_tokens(tokens, output_format)
         highlighted_text = self.tokens_to_text(highlighted_tokens)
 
         return self.to_output_format(highlighted_text, output_format)
