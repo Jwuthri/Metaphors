@@ -15,7 +15,7 @@ repos:
     types: [python]
   - id: pytest
     name: pytest - Check unit tests
-    entry: pipenv run pytest --doctest-modules
+    entry: pytest --doctest-modules
     pass_filenames: false
     language: system
     types: [python]
