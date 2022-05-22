@@ -2,11 +2,23 @@ import re
 import string
 from typing import List, Tuple
 
+from sklearn.feature_extraction.text import CountVectorizer
+
+from metaphors.applications.bionic_reading.settings import SIMPLE_SPLITTER
+from metaphors.data import stopwords
+
 
 class BionicReading:
     """Read faster with your brain, not your eyes."""
 
-    def __init__(self, fixation: float = 0.6, saccades: float = 0.75, opacity: float = 0.75):
+    def __init__(
+        self,
+        fixation: float = 0.6,
+        saccades: float = 0.75,
+        opacity: float = 0.75,
+        stopwords: float = 0.25,
+        stopwords_behavior: str = None,
+    ):
         """
         Inits BionicReading
 
@@ -16,10 +28,16 @@ class BionicReading:
         :type saccades: float
         :param opacity: Opacity you define the visibility of your fixation
         :type opacity: float
+        :param stopwords: Determine whether the list of stopwords is long or not
+        :type stopwords: float
+        :param stopwords_behavior: Change the way the stopwords are handled (remove, ignore, None)
+        :type stopwords_behavior: str
         """
         self.fixation = fixation
         self.saccades = saccades
         self.opacity = opacity
+        self.stopwords = stopwords
+        self.stopwords_behavior = stopwords_behavior
         self.non_tokens = string.punctuation + " \n\t"
         self.bold = "\033[1m"
         self.end = "\033[0m"
@@ -66,6 +84,41 @@ class BionicReading:
     def opacity(self):
         del self._opacity
 
+    @property
+    def stopwords_behavior(self):
+        return self._stopwords_behavior
+
+    @stopwords_behavior.setter
+    def stopwords_behavior(self, value: float):
+        assert value in [None, "remove", "ignore"], "please enter a stopwords_behavior within [None, remove, ignore]"
+        self._stopwords_behavior = value
+
+    @stopwords_behavior.deleter
+    def stopwords_behavior(self):
+        del self._stopwords_behavior
+
+    @property
+    def stopwords(self):
+        return self._stopwords
+
+    @stopwords.setter
+    def stopwords(self, value: float):
+        assert isinstance(value, float), "please use a stopwords float type"
+        assert 0 <= value <= 1, "please enter a stopwords value between 0 and 1"
+        self._stopwords = (
+            stopwords.VERY_LIGHT_STOPWORDS_SET
+            if value <= 1 / 4
+            else stopwords.LIGHT_STOPWORDS_SET
+            if value <= 1 / 2
+            else stopwords.NORMAL_STOPWORDS_SET
+            if value <= 3 / 4
+            else stopwords.STRONG_STOPWORDS_SET
+        )
+
+    @stopwords.deleter
+    def stopwords(self):
+        del self._stopwords
+
     @staticmethod
     def split_text_to_words(text: str) -> List[str]:
         """
@@ -75,7 +128,7 @@ class BionicReading:
         :type text: str
         :return: A list of strings
         """
-        tokens = re.split("([\t \n-])", text)
+        tokens = re.split(SIMPLE_SPLITTER, text)
 
         return [token for token in tokens if len(token) > 0]
 

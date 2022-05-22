@@ -1,6 +1,6 @@
 import unittest
 
-from src.applications.bionic_reading.features.bionic_reading import BionicReading
+from metaphors.applications.bionic_reading.features.bionic_reading import BionicReading
 
 
 class TestBionicReading(unittest.TestCase):
@@ -35,6 +35,3 @@ class TestBionicReading(unittest.TestCase):
             BionicReading(fixation=0.6, saccades=0.75, opacity=0.7).read_faster(text=text, output_format="html")
             == expected_output
         )
-
-    def test_other(self):
-        pass
