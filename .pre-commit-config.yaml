@@ -3,13 +3,13 @@ repos:
   hooks:
   - id: black
     name: black - Format code (-l 120)
-    entry: pipenv run black gml
+    entry: black src
     args: [-l 120]
     language: system
     types: [python]
   - id: mypy
     name: mypy - Check static types match
-    entry: pipenv run mypy src --ignore-missing-imports --no-site-packages
+    entry: mypy src --ignore-missing-imports --no-site-packages
     pass_filenames: false
     language: system
     types: [python]

@@ -6,7 +6,7 @@ from typing import List, Tuple
 class BionicReading:
     """Read faster with your brain, not your eyes."""
 
-    def __init__(self, fixation: float = .6, saccades: float = .75, opacity: float = .75):
+    def __init__(self, fixation: float = 0.6, saccades: float = 0.75, opacity: float = 0.75):
         """
         Inits BionicReading
 
@@ -21,8 +21,8 @@ class BionicReading:
         self.saccades = saccades
         self.opacity = opacity
         self.non_tokens = string.punctuation + " \n\t"
-        self.bold = '\033[1m'
-        self.end = '\033[0m'
+        self.bold = "\033[1m"
+        self.end = "\033[0m"
 
     @property
     def fixation(self):
@@ -135,7 +135,10 @@ class BionicReading:
             if token not in self.non_tokens:
                 index += 1
                 if index % self.saccades_highlight() == 0 or index == 1:
-                    token_to_highlight, token_not_to_highlight = self.fixation_highlight(token)
+                    (
+                        token_to_highlight,
+                        token_not_to_highlight,
+                    ) = self.fixation_highlight(token)
                     token = self.opacity_highlight(token_to_highlight, output_format) + token_not_to_highlight
             highlighted_tokens.append(token)
 
@@ -187,8 +190,9 @@ class BionicReading:
         return self.to_output_format(highlighted_text, output_format)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _ = BionicReading().read_faster(
-        "We are happy if as many people as possible can use the advantage of Bionic Reading.", output_format="html"
+        "We are happy if as many people as possible can use the advantage of Bionic Reading.",
+        output_format="html",
     )
     print(_)
