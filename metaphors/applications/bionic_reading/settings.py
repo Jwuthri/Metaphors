@@ -5,12 +5,27 @@ SIMPLE_SPLITTER = "([\t \n-.!?;:(){}'])"
 
 
 class OutputFormat(Enum):
-    HTML = "html"
     PYTHON = "python"
     TEXT = "text"
+    HTML = "html"
 
 
 class StopWordsBehavior(Enum):
-    KEEP = "keep"
+    STRIKETHROUGH = "strikethrough"
+    HIGHLIGHT = "highlight"
     REMOVE = "remove"
     IGNORE = "ignore"
+    BOLD = "bold"
+
+
+class RareBehavior(Enum):
+    HIGHLIGHT = "highlight"
+    UNDERLINE = "underline"
+    BOLD = "bold"
+
+
+class Format(Enum):
+    STRIKETHROUGH = "strikethrough"
+    HIGHLIGHT = "highlight"
+    UNDERLINE = "underline"
+    BOLD = "bold"

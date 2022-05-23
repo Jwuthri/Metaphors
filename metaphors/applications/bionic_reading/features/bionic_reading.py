@@ -6,7 +6,8 @@ from typing import List, Tuple
 from sklearn.feature_extraction.text import CountVectorizer
 
 from metaphors.data import stopwords
-from metaphors.utils.string_utils import string_contains_digit
+from metaphors.utils.string_utils import string_contains_digit, strike_string
+from metaphors.applications.bionic_reading.settings import RareBehavior, Format
 from metaphors.applications.bionic_reading.settings import SIMPLE_SPLITTER, OutputFormat, StopWordsBehavior
 
 
@@ -19,9 +20,10 @@ class BionicReading:
         saccades: float = 0.75,
         opacity: float = 0.75,
         stopwords: float = 0.25,
-        stopwords_behavior: str = StopWordsBehavior.KEEP.value,
-        overlight_uncommon_words: bool = False,
-        max_freq_uncommon_words: int = 5,
+        stopwords_behavior: str = StopWordsBehavior.STRIKETHROUGH.value,
+        output_format: str = OutputFormat.HTML.value,
+        rare_words_behavior: str = RareBehavior.UNDERLINE.value,
+        rare_words_max_freq: int = 5,
     ):
         """
         Inits BionicReading
@@ -36,19 +38,24 @@ class BionicReading:
         :type stopwords: float
         :param stopwords_behavior: Change the way the stopwords are handled (remove, ignore, keep)
         :type stopwords_behavior: str
-        :param overlight_uncommon_words: Gives a specific color to uncommon words
-        :type overlight_uncommon_words: bool
-        :param max_freq_uncommon_words: Max frequency word to be considered as uncommon
-        :type max_freq_uncommon_words: int
+        :param output_format: The format of the output. Can be "html" or "python", defaults to html
+        :type output_format: str
+        :param rare_words_behavior: Change the way the rare words are handled (highlight, underline)
+        :type rare_words_behavior: str
+        :param rare_words_max_freq: Max frequency word to be considered as uncommon
+        :type rare_words_max_freq: int
         """
         self.fixation = fixation
         self.saccades = saccades
         self.opacity = opacity
         self.stopwords = stopwords
+        self.output_format = output_format
         self.stopwords_behavior = stopwords_behavior
-        self.overlight_uncommon_words = overlight_uncommon_words
-        self.max_freq_uncommon_words = max_freq_uncommon_words
+        self.rare_words_behavior = rare_words_behavior
+        self.rare_words_max_freq = rare_words_max_freq
         self.non_tokens = string.punctuation + " \n\t"
+        self.highlight = "\033[93m"
+        self.underline = "\033[4m"
         self.bold = "\033[1m"
         self.end = "\033[0m"
 
@@ -201,7 +208,7 @@ class BionicReading:
         """
         del self._stopwords
 
-    def get_uncommon_words(self, text: str) -> List[str]:
+    def get_rare_words(self, text: str) -> List[str]:
         """
         Takes a string of text, and returns a list of words that appear more than a certain number of times in the text
 
@@ -213,7 +220,7 @@ class BionicReading:
         transformed = vectorizer.fit_transform([text])
         data = pd.DataFrame(transformed.toarray(), columns=vectorizer.get_feature_names_out()).T
         data.columns = ["freq"]
-        uncommon_words = data[data["freq"] > self.max_freq_uncommon_words].index.tolist()
+        uncommon_words = data[data["freq"] > self.rare_words_max_freq].index.tolist()
         uncommon_words = [word for word in uncommon_words if not string_contains_digit(word)]
 
         return uncommon_words
@@ -231,21 +238,35 @@ class BionicReading:
 
         return [token for token in tokens if len(token) > 0]
 
-    def opacity_highlight(self, token: str, output_format: str) -> str:
+    def opacity_highlight(self, token: str, highlight_format: str = Format.BOLD.value) -> str:
         """
         If the output format is HTML, return the token surrounded by `<b>` tags. Otherwise, return the token surrounded
         by the `bold` and `end` attributes of the `self` object.
 
         :param token: The token to be highlighted
         :type token: str
-        :param output_format: The output format of the code. This can be "html" or "python"
-        :type output_format: str
+        :param highlight_format: The highlighting format
+        :type highlight_format: str
         :return: The token is being returned with the bold formatting.
         """
-        if output_format == OutputFormat.HTML.value:
-            return f"<b>{token}</b>"
+        if self.output_format == OutputFormat.HTML.value:
+            if highlight_format == Format.HIGHLIGHT.value:
+                return f"<mark>{token}</mark>"
+            elif highlight_format == Format.UNDERLINE.value:
+                return f"<u>{token}</u>"
+            elif highlight_format == Format.STRIKETHROUGH.value:
+                return f"<s>{token}</s>"
+            else:
+                return f"<b>{token}</b>"
         else:
-            return f"{self.bold}{token}{self.end}"
+            if highlight_format == Format.HIGHLIGHT.value:
+                return f"{self.highlight}{token}{self.end}"
+            elif highlight_format == Format.UNDERLINE.value:
+                return f"{self.underline}{token}{self.end}"
+            elif highlight_format == Format.STRIKETHROUGH.value:
+                return strike_string(token)
+            else:
+                return f"{self.bold}{token}{self.end}"
 
     def fixation_highlight(self, token: str) -> Tuple[str, str]:
         """
@@ -279,10 +300,15 @@ class BionicReading:
         """
         if self.stopwords_behavior == StopWordsBehavior.REMOVE.value:
             return ""
+        elif self.stopwords_behavior == StopWordsBehavior.STRIKETHROUGH.value:
+            return self.opacity_highlight(token, self.stopwords_behavior)
         else:
             return token
 
-    def highlight_tokens(self, tokens: List[str], uncommon_words: List[str], output_format: str) -> List[str]:
+    def rare_words_highlight(self, token: str) -> str:
+        return self.opacity_highlight(token, self.rare_words_behavior)
+
+    def highlight_tokens(self, tokens: List[str], uncommon_words: List[str]) -> List[str]:
         """
         The function takes a list of tokens and an output format, and returns a list of tokens with the tokens that are
         highlighted
@@ -291,8 +317,6 @@ class BionicReading:
         :type tokens: List[str]
         :param uncommon_words: List of all uncommon words
         :type uncommon_words: List[str]
-        :param output_format: The format of the output file
-        :type output_format: str
         :return: A list of tokens with the tokens that are highlighted.
         """
         index = 0
@@ -301,15 +325,23 @@ class BionicReading:
             if token not in self.non_tokens:
                 index += 1
                 if token.lower() in uncommon_words:
-                    pass
-                elif token in self.stopwords and self.stopwords_behavior != StopWordsBehavior.KEEP.value:
+                    token = self.rare_words_highlight(token)
+                elif token in self.stopwords and self.stopwords_behavior not in (
+                    StopWordsBehavior.HIGHLIGHT.value,
+                    StopWordsBehavior.BOLD.value,
+                ):
                     token = self.stopwords_highlight(token)
+                    index -= 1
                 elif index % self.saccades_highlight() == 0 or index == 1:
                     (
                         token_to_highlight,
                         token_not_to_highlight,
                     ) = self.fixation_highlight(token)
-                    token = self.opacity_highlight(token_to_highlight, output_format) + token_not_to_highlight
+                    if token in self.stopwords:
+                        token_to_highlight = self.opacity_highlight(token_to_highlight, self.stopwords_behavior)
+                    else:
+                        token_to_highlight = self.opacity_highlight(token_to_highlight)
+                    token = token_to_highlight + token_not_to_highlight
             highlighted_tokens.append(token)
 
         return highlighted_tokens
@@ -325,45 +357,43 @@ class BionicReading:
         """
         return "".join(tokens)
 
-    def to_output_format(self, text: str, output_format: str) -> str:
+    def to_output_format(self, text: str) -> str:
         """
         If the output format is HTML, then add the HTML tags to the highlighted text
 
         :param text: The text to be highlighted
         :type text: str
-        :param output_format: The format of the output. Can be "html" or "python"
-        :type output_format: str
         :return: The highlighted text.
         """
         output = text
-        if output_format == OutputFormat.HTML.value:
+        if self.output_format == OutputFormat.HTML.value:
             style = "b {font-weight: %d}" % (self.opacity * 1000)
             output = f"<!DOCTYPE html><html><head><style>{style}</style></head><body><p>{text}</p></body></html>"
 
         return output
 
-    def read_faster(self, text: str, output_format: str = "html") -> str:
+    def read_faster(
+        self,
+        text: str,
+    ) -> str:
         """
         The function takes a string of text, splits it into a list of words, highlights the words, and then returns the
         highlighted text
 
         :param text: the text you want to read faster
         :type text: str
-        :param output_format: The format of the output. Can be "html" or "python", defaults to html
-        :type output_format: str (optional)
         :return: The highlighted text
         """
         tokens = self.split_text_to_words(text)
-        uncommon_words = self.get_uncommon_words(text)
-        highlighted_tokens = self.highlight_tokens(tokens, uncommon_words, output_format)
+        uncommon_words = self.get_rare_words(text)
+        highlighted_tokens = self.highlight_tokens(tokens, uncommon_words)
         highlighted_text = self.tokens_to_text(highlighted_tokens)
 
-        return self.to_output_format(highlighted_text, output_format)
+        return self.to_output_format(highlighted_text)
 
 
 if __name__ == "__main__":
-    _ = BionicReading().read_faster(
-        text="We are happy if as many people as possible can use the advantage of Bionic Reading.",
-        output_format="python",
+    _ = BionicReading(fixation=0.6, saccades=0.75, opacity=0.7, output_format="html").read_faster(
+        text="We are happy if as many people as possible can use the advantage of Bionic Reading."
     )
     print(_)
