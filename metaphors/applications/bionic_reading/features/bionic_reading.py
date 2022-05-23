@@ -240,14 +240,14 @@ class BionicReading:
 
     def opacity_highlight(self, token: str, highlight_format: str = Format.BOLD.value) -> str:
         """
-        If the output format is HTML, return the token surrounded by `<b>` tags. Otherwise, return the token surrounded
-        by the `bold` and `end` attributes of the `self` object.
+        If the output format is HTML, then return the HTML tag for the given format. Otherwise, return the ANSI escape code
+        for the given format
 
         :param token: The token to be highlighted
         :type token: str
-        :param highlight_format: The highlighting format
+        :param highlight_format: This is the format that you want to highlight the token with
         :type highlight_format: str
-        :return: The token is being returned with the bold formatting.
+        :return: A string with the token in the specified format.
         """
         if self.output_format == OutputFormat.HTML.value:
             if highlight_format == Format.HIGHLIGHT.value:
@@ -306,6 +306,14 @@ class BionicReading:
             return token
 
     def rare_words_highlight(self, token: str) -> str:
+        """
+        If the token is a rare word, then return the token with the opacity set to the value of the rare_words_behavior
+        attribute
+
+        :param token: the token to highlight
+        :type token: str
+        :return: The opacity_highlight function is being returned.
+        """
         return self.opacity_highlight(token, self.rare_words_behavior)
 
     def highlight_tokens(self, tokens: List[str], uncommon_words: List[str]) -> List[str]:
