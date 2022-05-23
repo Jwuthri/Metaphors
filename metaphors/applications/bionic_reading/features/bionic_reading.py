@@ -5,7 +5,7 @@ import pandas as pd
 from typing import List, Tuple
 from sklearn.feature_extraction.text import CountVectorizer
 
-from metaphors.data import stopwords
+from metaphors.data import stopwords_set
 from metaphors.utils.string_utils import string_contains_digit, strike_string
 from metaphors.applications.bionic_reading.settings import RareBehavior, Format
 from metaphors.applications.bionic_reading.settings import SIMPLE_SPLITTER, OutputFormat, StopWordsBehavior
@@ -38,11 +38,11 @@ class BionicReading:
         :type stopwords: float
         :param stopwords_behavior: Change the way the stopwords are handled (remove, ignore, keep)
         :type stopwords_behavior: str
-        :param output_format: The format of the output. Can be "html" or "python", defaults to html
+        :param output_format: The format of the output (html, python)
         :type output_format: str
         :param rare_words_behavior: Change the way the rare words are handled (highlight, underline)
         :type rare_words_behavior: str
-        :param rare_words_max_freq: Max frequency word to be considered as uncommon
+        :param rare_words_max_freq: Max frequency word to be considered as rare
         :type rare_words_max_freq: int
         """
         self.fixation = fixation
@@ -192,13 +192,13 @@ class BionicReading:
         assert isinstance(value, float), "please use a stopwords float type"
         assert 0 <= value <= 1, "please enter a stopwords value between 0 and 1"
         self._stopwords = (
-            stopwords.VERY_LIGHT_STOPWORDS_SET
+            stopwords_set.VERY_LIGHT_STOPWORDS_SET
             if value <= 1 / 4
-            else stopwords.LIGHT_STOPWORDS_SET
+            else stopwords_set.LIGHT_STOPWORDS_SET
             if value <= 1 / 2
-            else stopwords.NORMAL_STOPWORDS_SET
+            else stopwords_set.NORMAL_STOPWORDS_SET
             if value <= 3 / 4
-            else stopwords.STRONG_STOPWORDS_SET
+            else stopwords_set.STRONG_STOPWORDS_SET
         )
 
     @stopwords.deleter
@@ -207,6 +207,91 @@ class BionicReading:
         It deletes the stopwords attribute of the object
         """
         del self._stopwords
+
+    @property
+    def output_format(self):
+        """
+        It returns the output format of the object
+        :return: The output format of the file.
+        """
+        return self._output_format
+
+    @output_format.setter
+    def output_format(self, value: str):
+        """
+        The function takes in a string value and checks if it is a valid output format. If it is, it sets the output format
+        to that value
+
+        :param value: the value that the parameter will be set to
+        :type value: str
+        """
+        possible_values = [output.value.lower() for output in OutputFormat]
+        assert isinstance(value, str), "please use a output_format str type"
+        assert value in possible_values, f"please enter a output_format within {possible_values}"
+        self._output_format = value
+
+    @output_format.deleter
+    def output_format(self):
+        """
+        It deletes the output format attribute from the object
+        """
+        del self._output_format
+
+    @property
+    def rare_words_behavior(self):
+        """
+        This function returns the value of the private variable _rare_words_behavior
+        :return: The rare_words_behavior is being returned.
+        """
+        return self._rare_words_behavior
+
+    @rare_words_behavior.setter
+    def rare_words_behavior(self, value: str):
+        """
+        The function takes in a string value and checks if it is a valid string and if it is a valid string, it sets the
+        value of the rare_words_behavior attribute to the value of the string
+
+        :param value: the value to be replaced
+        :type value: str
+        """
+        possible_values = [behavior.value.lower() for behavior in RareBehavior]
+        assert isinstance(value, str), "please use a rare_words_behavior str type"
+        assert value in possible_values, f"please enter a rare_words_behavior within {possible_values}"
+        self._rare_words_behavior = value
+
+    @rare_words_behavior.deleter
+    def rare_words_behavior(self):
+        """
+        It deletes the rare_words_behavior attribute from the object.
+        """
+        del self._rare_words_behavior
+
+    @property
+    def rare_words_max_freq(self):
+        """
+        This function returns the maximum frequency of a rare word
+        :return: The rare_words_max_freq is being returned.
+        """
+        return self._rare_words_max_freq
+
+    @rare_words_max_freq.setter
+    def rare_words_max_freq(self, value: int):
+        """
+        This function takes in a value and checks if it is an integer. If it is, it sets the value of the
+        rare_words_max_freq variable to the value that was passed in
+
+        :param value: The value of the parameter
+        :type value: int
+        """
+        assert isinstance(value, int), "please use a rare_words_max_freq int type"
+        self._rare_words_max_freq = value
+
+    @rare_words_max_freq.deleter
+    def rare_words_max_freq(self):
+        """
+        It deletes the rare_words_max_freq attribute from the object.
+        """
+        del self._rare_words_max_freq
 
     def get_rare_words(self, text: str) -> List[str]:
         """
