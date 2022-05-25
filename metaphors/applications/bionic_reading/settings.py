@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-SIMPLE_SPLITTER = "([\t \n-.!?;:(){}'])"
+SIMPLE_SPLITTER = "([\t\] \n-.!?;:(){}'/[])"
 
 
 class OutputFormat(Enum):
